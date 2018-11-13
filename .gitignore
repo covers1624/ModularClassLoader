@@ -12,7 +12,7 @@
 !.gitignore
 
 # Other Important Files
-!LICENSE
+!LICENSE.md
 !README.md
 
 # Other Important Folders

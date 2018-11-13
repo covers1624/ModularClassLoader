@@ -1,0 +1,98 @@
+plugins {
+    id 'java'
+    id 'maven'
+}
+group 'net.covers1624'
+archivesBaseName = 'ModularClassLoader'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile 'junit:junit:4.12'
+    testRuntime 'org.ow2.asm:asm-all:6.0_BETA'
+    testCompileOnly 'org.ow2.asm:asm-debug-all:6.0_BETA'
+    compileOnly 'org.jetbrains:annotations:16.0.2'
+    compileOnly 'org.ow2.asm:asm-debug-all:6.0_BETA'
+    compileOnly 'org.apache.logging.log4j:log4j-core:2.11.1'
+}
+
+jar {
+    manifest {
+        attributes "Main-Class": "net.covers1624.classloader.LaunchBouncer"
+    }
+}
+
+task srcJar(type: Jar, dependsOn: jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives srcJar
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            if (project.hasProperty("local_maven") || project.hasProperty("maven_pass")) {
+                if (project.hasProperty("maven_pass")) {
+                    println "Uploading to remote maven."
+                    repository(url: "https://maven_upload.covers1624.net/") {
+                        authentication(userName: "covers1624", password: project.getProperty("maven_pass"))
+                    }
+                } else {
+                    println "Uploading to local maven: ${local_maven}"
+                    repository(url: "file://${local_maven}")
+                }
+            } else {
+                println "Uplodaing to local maven: ${mavenLocal().url}"
+                repository(url: mavenLocal().url)
+            }
+            pom {
+                groupId = project.group
+                artifactId = project.archivesBaseName
+
+                project {
+                    name project.archivesBaseName
+                    packaging 'jar'
+                    description 'ModularClassLoader'
+                    url 'https://github.com/covers1624/ModularClassLoader'
+
+                    scm {
+                        url 'https://github.com/covers1624/ModularClassLoader'
+                        connection 'scm:git:git://github.com/covers1624/ModularClassLoader.git'
+                        developerConnection 'scm:git:git@github.com:covers1624/ModularClassLoader.git'
+                    }
+
+                    issueManagement {
+                        system 'github'
+                        url 'https://github.com/covers1624/ModularClassLoader/issues'
+                    }
+
+                    licenses {
+                        license {
+                            name "MIT"
+                            url 'https://opensource.org/licenses/MIT'
+                            distribution 'repo'
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id 'covers1624'
+                            name 'covers1624'
+                            roles {
+                                role 'developer'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,4 +1,4 @@
-package net.covers1624.classloader;
+package net.covers1624.classloader.api;
 
 import org.jetbrains.annotations.Nullable;
 

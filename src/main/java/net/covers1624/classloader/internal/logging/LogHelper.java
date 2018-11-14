@@ -52,8 +52,7 @@ public class LogHelper {
         //Instantiate via reflection, because it needs to be loaded by our class loader.
         setLoggerFactory((ILoggerFactory) Class.forName("net.covers1624.classloader.internal.logging.impl.Log4jFactory", true, classLoader).newInstance());
         //Solves some ClassLoading issues with ModularClassLoader attempting to load classes whilst its logging.
-        getLogger("LogHelper").info("Using Log4j!{}", "");
-        getLogger("LogHelper").trace("Using Log4j!{}", "");
+        getLogger("LogHelper").info("ModularClassLoader will use Log4j!{}", "");
     }
 
 }

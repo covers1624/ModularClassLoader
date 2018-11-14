@@ -1,22 +1,14 @@
-package net.covers1624.classloader;
+package net.covers1624.classloader.api;
 
 /**
  * A bouncer.
  * Used by LaunchBouncer.
- * If multiple IBounceClasses are found with the same 'id' an
- * exception will be thrown.
+ * By default the 'id' for your IBounceClass is its Class name.
+ * By using {@link BounceId}, you can provide a custom name.
  *
  * Created by covers1624 on 5/11/18.
  */
 public interface IBounceClass {
-
-    /**
-     * The 'id' for this bouncer.
-     * Used as the first parameter for the program when using LaunchBouncer.
-     *
-     * @return The id.
-     */
-    String getId();
 
     /**
      * Replacement for your standard static main method.

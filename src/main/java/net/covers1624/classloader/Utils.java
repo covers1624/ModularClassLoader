@@ -5,8 +5,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
@@ -15,32 +13,6 @@ import java.util.*;
  * Created by covers1624 on 10/11/18.
  */
 public class Utils {
-
-    private static final Class<ServiceLoader> c_ServiceLoader;
-    private static final Class c_LazyIterator;
-    private static final Constructor cs_LazyIterator;
-    private static final Field f_lookupIterator;
-    private static final Field f_service;
-    private static final Field f_loader;
-
-    static {
-        try {
-            c_ServiceLoader = ServiceLoader.class;
-            c_LazyIterator = Class.forName(Utils.c_ServiceLoader.getName() + "$LazyIterator");
-            cs_LazyIterator = Utils.c_LazyIterator.getDeclaredConstructors()[0];
-            f_lookupIterator = Utils.c_ServiceLoader.getDeclaredField("lookupIterator");
-            f_service = Utils.c_ServiceLoader.getDeclaredField("service");
-            f_loader = Utils.c_ServiceLoader.getDeclaredField("loader");
-
-            cs_LazyIterator.setAccessible(true);
-            f_lookupIterator.setAccessible(true);
-            f_service.setAccessible(true);
-            f_loader.setAccessible(true);
-
-        } catch (ClassNotFoundException | NoSuchFieldException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     /**
      * Reads an InputStream into a byte array.
@@ -160,25 +132,6 @@ public class Utils {
         String[] s1 = new String[s.length - 1];
         System.arraycopy(s, 1, s1, 0, s1.length);
         return s1;
-    }
-
-    /**
-     * Performs a 'soft' Reload on a ServiceLoader. See {@link ServiceLoader#reload()}.
-     * Reload specifically clears the already constructed list, meaning if we are checking
-     * for changes, we would end up constructing classes multiple times for no reason.
-     * Whilst this is still 'Hacky' its cleaner implementation wise.
-     *
-     * This just replaces the underlying LazyIterator instance inside ServiceLoader with a
-     * new one, exactly the same way {@link ServiceLoader#reload()} does.
-     *
-     * @param serviceLoader The service loader to reload.
-     * @throws Throwable If something went wrong.
-     */
-    public static void softReload(ServiceLoader<?> serviceLoader) throws Throwable {
-        Class service = (Class) f_service.get(serviceLoader);
-        ClassLoader loader = (ClassLoader) f_loader.get(serviceLoader);
-        Object lazyIter = cs_LazyIterator.newInstance(serviceLoader, service, loader, null);
-        f_lookupIterator.set(serviceLoader, lazyIter);
     }
 
     /**

@@ -1,5 +1,6 @@
-package net.covers1624.classloader;
+package net.covers1624.classloader.internal;
 
+import net.covers1624.classloader.ModularClassLoader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import sun.misc.Unsafe;

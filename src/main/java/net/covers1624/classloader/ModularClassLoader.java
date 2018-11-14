@@ -1,9 +1,13 @@
 package net.covers1624.classloader;
 
+import net.covers1624.classloader.api.IClassTransformer;
+import net.covers1624.classloader.api.IResourceResolver;
+import net.covers1624.classloader.internal.ProtectedAccessor;
 import net.covers1624.classloader.internal.logging.ILogger;
 import net.covers1624.classloader.internal.logging.LogHelper;
 import net.covers1624.classloader.internal.logging.impl.NoopLogger;
 import org.jetbrains.annotations.Nullable;
+import sun.misc.CompoundEnumeration;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -126,7 +130,7 @@ public final class ModularClassLoader extends ClassLoader {
                 //What can happen is this class loader can load some ASM classes, and the parent load others.
                 //This causes transformers to fail down the line due to our 'if the parent has loded it use that'
                 //stance, this forces this ClassLoader to load ProtectedAccessor and all the classes it will load.
-                Class<ProtectedAccessor> clazz = (Class<ProtectedAccessor>) Class.forName("net.covers1624.classloader.ProtectedAccessor", true, this);
+                Class<ProtectedAccessor> clazz = (Class<ProtectedAccessor>) Class.forName("net.covers1624.classloader.internal.ProtectedAccessor", true, this);
                 Method m = clazz.getDeclaredMethod("inject", ModularClassLoader.class);
                 m.setAccessible(true);
                 m.invoke(null, this);
@@ -292,12 +296,13 @@ public final class ModularClassLoader extends ClassLoader {
     }
 
     @Override
+    @SuppressWarnings ("unchecked")
     protected Enumeration<URL> findResources(String name) throws IOException {
-        List<Iterable<URL>> iters = new ArrayList<>();
+        List<Enumeration<URL>> enums = new ArrayList<>();
         for (IResourceResolver resolver : resolvers) {
-            iters.add(resolver.findResources(name));
+            enums.add(resolver.findResources(name));
         }
-        return Utils.toEnumeration(Utils.merge(iters));
+        return new CompoundEnumeration<>(enums.toArray(new Enumeration[0]));
     }
 
     /**

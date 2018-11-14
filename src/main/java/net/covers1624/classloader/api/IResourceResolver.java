@@ -1,4 +1,4 @@
-package net.covers1624.classloader;
+package net.covers1624.classloader.api;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Enumeration;
 
 /**
  * Created by covers1624 on 30/10/2017.
@@ -21,8 +22,8 @@ public interface IResourceResolver {
         }
 
         @Override
-        public Iterable<URL> findResources(String name) throws IOException {
-            return Collections::emptyIterator;
+        public Enumeration<URL> findResources(String name) throws IOException {
+            return Collections.emptyEnumeration();
         }
     };
 
@@ -42,7 +43,7 @@ public interface IResourceResolver {
      * @param name The name of the resource E.G: 'java/lang/Object.class'
      * @return The URL's
      */
-    Iterable<URL> findResources(String name) throws IOException;
+    Enumeration<URL> findResources(String name) throws IOException;
 
     /**
      * Creates an IResourceResolver from a ClassLoader.
@@ -60,8 +61,8 @@ public interface IResourceResolver {
             }
 
             @Override
-            public Iterable<URL> findResources(String name) throws IOException {
-                return Utils.toIterable(cl.getResources(name));
+            public Enumeration<URL> findResources(String name) throws IOException {
+                return cl.getResources(name);
             }
         };
     }
@@ -85,8 +86,8 @@ public interface IResourceResolver {
             }
 
             @Override
-            public Iterable<URL> findResources(String name) throws IOException {
-                return Utils.toIterable(ucp.findResources(name, true));
+            public Enumeration<URL> findResources(String name) throws IOException {
+                return ucp.findResources(name, true);
             }
         };
     }

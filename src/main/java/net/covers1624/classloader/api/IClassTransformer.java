@@ -1,5 +1,6 @@
-package net.covers1624.classloader;
+package net.covers1624.classloader.api;
 
+import net.covers1624.classloader.ModularClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ public interface IClassTransformer {
      * @param bytes The classes bytes.
      * @return The transformed bytes..
      */
-    @Nullable byte[] transform(@NotNull String name, @Nullable byte[] bytes);
+    @Nullable
+    byte[] transform(@NotNull String name, @Nullable byte[] bytes);
 
 }

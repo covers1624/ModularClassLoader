@@ -1,7 +1,7 @@
 package net.covers1624.classloader.resolvers;
 
-import net.covers1624.classloader.IResourceResolver;
-import net.covers1624.classloader.IResourceResolverFactory;
+import net.covers1624.classloader.api.IResourceResolver;
+import net.covers1624.classloader.api.IResourceResolverFactory;
 import net.covers1624.classloader.Utils;
 
 import java.io.File;

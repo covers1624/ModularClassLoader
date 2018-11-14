@@ -41,10 +41,10 @@ public class Log4jLogger implements ILogger {
     @Override public void debug(String message) { logger.debug(message); }
     @Override public void debug(String message, Throwable t) { logger.debug(message, t); }
     @Override public void debug(String message, Object... params) { logger.debug(message, params); }
-    @Override public void trace(Object message) { logger.debug(message); }
-    @Override public void trace(Object message, Throwable t) { logger.debug(message, t); }
-    @Override public void trace(String message) { logger.debug(message); }
-    @Override public void trace(String message, Throwable t) { logger.debug(message, t); }
-    @Override public void trace(String message, Object... params) { logger.debug(message, params); }
+    @Override public void trace(Object message) { logger.trace(message); }
+    @Override public void trace(Object message, Throwable t) { logger.trace(message, t); }
+    @Override public void trace(String message) { logger.trace(message); }
+    @Override public void trace(String message, Throwable t) { logger.trace(message, t); }
+    @Override public void trace(String message, Object... params) { logger.trace(message, params); }
     //@formatter:on
 }

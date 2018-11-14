@@ -1,4 +1,4 @@
-package net.covers1624.classloader;
+package net.covers1624.classloader.api;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;

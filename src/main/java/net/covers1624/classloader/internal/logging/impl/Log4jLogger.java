@@ -1,6 +1,6 @@
 package net.covers1624.classloader.internal.logging.impl;
 
-import net.covers1624.classloader.internal.logging.ILogger;
+import net.covers1624.classloader.api.logging.ILogger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

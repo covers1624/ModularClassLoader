@@ -3,7 +3,7 @@ package net.covers1624.classloader;
 import net.covers1624.classloader.api.IClassTransformer;
 import net.covers1624.classloader.api.IResourceResolver;
 import net.covers1624.classloader.internal.ProtectedAccessor;
-import net.covers1624.classloader.internal.logging.ILogger;
+import net.covers1624.classloader.api.logging.ILogger;
 import net.covers1624.classloader.internal.logging.LogHelper;
 import net.covers1624.classloader.internal.logging.impl.NoopLogger;
 import org.jetbrains.annotations.Nullable;
@@ -128,7 +128,7 @@ public final class ModularClassLoader extends ClassLoader {
             try {
                 //This is called via reflection, so we avoid yet more ClassLoader issues.
                 //What can happen is this class loader can load some ASM classes, and the parent load others.
-                //This causes transformers to fail down the line due to our 'if the parent has loded it use that'
+                //This causes transformers to fail down the line due to our 'if the parent has loaded it use that'
                 //stance, this forces this ClassLoader to load ProtectedAccessor and all the classes it will load.
                 Class<ProtectedAccessor> clazz = (Class<ProtectedAccessor>) Class.forName("net.covers1624.classloader.internal.ProtectedAccessor", true, this);
                 Method m = clazz.getDeclaredMethod("inject", ModularClassLoader.class);

@@ -1,6 +1,7 @@
 package net.covers1624.classloader;
 
 import net.covers1624.classloader.api.*;
+import net.covers1624.classloader.api.logging.ILoggerFactory;
 import net.covers1624.classloader.internal.logging.LogHelper;
 
 import java.io.IOException;
@@ -54,11 +55,16 @@ public class LaunchBouncer {
         Sort.class.getName();
         BounceId.class.getName();
         UseClassLoaderASM.class.getName();
+        EnvVar.class.getName();
+        EnvVarList.class.getName();
+        ClassLoaderLoggerImpl.class.getName();
+        ILoggerFactory.class.getName();
 
         boolean newStuff = false;
         SimpleServiceLoader<IResourceResolverFactory> factories = new SimpleServiceLoader<>(IResourceResolverFactory.class, classLoader);
         do {
             factories.poll();
+            newStuff = false;
             for (Class<IResourceResolverFactory> clazz : factories.getNewServices()) {
                 newStuff = true;
                 IResourceResolverFactory factory = clazz.newInstance();
@@ -69,14 +75,9 @@ public class LaunchBouncer {
                     }
                 } catch (IOException ignored) {
                 }
-
             }
-
         }
         while (newStuff);
-
-        LogHelper.findLoggerImpl(classLoader);
-        ModularClassLoader.refreshLogger();
 
         SimpleServiceLoader<IClassTransformer> transformerLoader = new SimpleServiceLoader<>(IClassTransformer.class, classLoader);
         Map<Priority, List<IClassTransformer>> priorityMap = new HashMap<>();
@@ -94,7 +95,7 @@ public class LaunchBouncer {
         }
 
         SimpleServiceLoader<IBounceClass> bounceLoader = new SimpleServiceLoader(IBounceClass.class, classLoader);
-        Map<String, K2BPair<Class<IBounceClass>>> bounceClasses = new HashMap<>();
+        Map<String, BounceState> bounceStates = new HashMap<>();
         bounceLoader.poll();
         for (Class<IBounceClass> bounceClazz : bounceLoader.getAllServices()) {
             String id = bounceClazz.getName();
@@ -102,60 +103,97 @@ public class LaunchBouncer {
                 BounceId bounceId = bounceClazz.getAnnotation(BounceId.class);
                 id = bounceId.value();
             }
-            boolean useCLASM = bounceClazz.isAnnotationPresent(UseClassLoaderASM.class);
-
-            K2BPair<Class<IBounceClass>> existing = bounceClasses.get(id);
-            if (existing != null) {
-                Class<IBounceClass> cls = existing.k;
-                StringBuilder builder = new StringBuilder();
-                builder.append("Duplicate IBounceClass id. ").append(id).append("\n");
-                builder.append(" A: ").append(cls.getName()).append("\n");
-                builder.append(" B:").append(bounceClazz.getName()).append("\n");
-                throw new RuntimeException(builder.toString());
+            {
+                BounceState existing = bounceStates.get(id);
+                if (existing != null) {
+                    StringBuilder builder = new StringBuilder();
+                    builder.append("Duplicate IBounceClass id. ").append(id).append("\n");
+                    builder.append(" A: ").append(existing.clazz.getName()).append("\n");
+                    builder.append(" B:").append(bounceClazz.getName()).append("\n");
+                    throw new RuntimeException(builder.toString());
+                }
             }
-            bounceClasses.put(id, K2BPair.of(bounceClazz, useCLASM));
+            BounceState state = new BounceState();
+            bounceStates.put(id, state);
+            state.id = id;
+            state.clazz = bounceClazz;
+            state.useASM = bounceClazz.isAnnotationPresent(UseClassLoaderASM.class);
+
+            if (bounceClazz.isAnnotationPresent(EnvVarList.class)) {
+                EnvVarList list = bounceClazz.getAnnotation(EnvVarList.class);
+                for (EnvVar var : list.value()) {
+                    state.env.put(var.key(), var.value());
+                }
+            } else if (bounceClazz.isAnnotationPresent(EnvVar.class)) {
+                EnvVar var = bounceClazz.getAnnotation(EnvVar.class);
+                state.env.put(var.key(), var.value());
+            }
+
+            if (bounceClazz.isAnnotationPresent(ClassLoaderLoggerImpl.class)) {
+                state.loggerImpl = bounceClazz.getAnnotation(ClassLoaderLoggerImpl.class).value();
+            }
+
         }
-        if (bounceClasses.isEmpty()) {
+        if (bounceStates.isEmpty()) {
             throw new RuntimeException("No Bounce classes found.");
         }
-        K2BPair<Class<IBounceClass>> pair = null;
-        if (bounceClasses.size() == 1) {
+        BounceState state = null;
+        if (bounceStates.size() == 1) {
             if (args.length > 0) {
                 String first = args[0];
-                if (bounceClasses.containsKey(first)) {
+                if (bounceStates.containsKey(first)) {
                     args = Utils.shiftArgs(args);
                 }
             }
-            pair = bounceClasses.values().iterator().next();
+            state = bounceStates.values().iterator().next();
         }
-        if (pair == null) {
+        if (state == null) {
             if (args.length >= 1) {
                 String first = args[0];
                 args = Utils.shiftArgs(args);
-                pair = bounceClasses.get(first);
-                if (pair == null) {
+                state = bounceStates.get(first);
+                if (state == null) {
                     throw new RuntimeException("Bounce Class id '" + first + "' Not found.");
                 }
             }
         }
 
-        if (pair == null) {
+        if (state == null) {
             StringBuilder builder = new StringBuilder("Available IBounceClasses: \n");
-            for (String id : bounceClasses.keySet()) {
+            for (String id : bounceStates.keySet()) {
                 builder.append("  ").append(id);
             }
             System.out.println(builder.toString());
 
         } else {
-            invoke(pair, args);
+            invoke(state, args);
         }
     }
 
-    private static void invoke(K2BPair<Class<IBounceClass>> pair, String[] args) throws Throwable {
-        if (pair.v) {
+    private static void invoke(BounceState state, String[] args) throws Throwable {
+        if (state.useASM) {
             classLoader.useASMHacks();
         }
-        pair.k.newInstance().main(args);
+        state.env.forEach(System::setProperty);
+
+        if (state.loggerImpl != null) {
+            Class factoryClass = Class.forName(state.loggerImpl, false, classLoader);
+            if (!ILoggerFactory.class.isAssignableFrom(factoryClass)) {
+                throw new IllegalArgumentException("Class provided via @ClassLoaderLoggerImpl is not an instance of ILoggerFactory.");
+            }
+            LogHelper.setLoggerFactory((ILoggerFactory) factoryClass.newInstance());
+        }
+        ModularClassLoader.refreshLogger();
+        state.clazz.newInstance().main(args);
+    }
+
+    private static class BounceState {
+
+        public String id;
+        public Class<IBounceClass> clazz;
+        public boolean useASM;
+        public Map<String, String> env = new HashMap<>();
+        public String loggerImpl;
     }
 
 }

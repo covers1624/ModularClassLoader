@@ -1,4 +1,4 @@
-package net.covers1624.classloader.internal.logging;
+package net.covers1624.classloader.api.logging;
 
 /**
  * Simple abstraction from Log4j, because this lib is minimalistic.

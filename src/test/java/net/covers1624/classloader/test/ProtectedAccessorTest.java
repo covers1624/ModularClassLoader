@@ -17,5 +17,4 @@ public class ProtectedAccessorTest {
         cl.useASMHacks();
     }
 
-
 }
